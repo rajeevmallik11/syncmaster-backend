@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SyncMaster Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
+    header {
+      background: rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+    }
+    
+    h1 { font-size: 2rem; margin-bottom: 10px; }
+    
+    .status {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+    
+    .dot.offline { background: #ef4444; animation: none; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+    
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%;
+      transition: all 0.3s;
+    }
+    
+    .btn:hover { background: #4f46e5; transform: translateY(-2px); }
+    .btn:disabled { background: #4b5563; cursor: not-allowed; transform: none; }
+    
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+    
+    .output {
+      background: #0f0f23;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.85rem;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    .output.error { border: 1px solid #dc2626; }
+    .output.success { border: 1px solid #22c55e; }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #a5b4fc;
+      font-size: 0.9rem;
+    }
+    
+    .session-info {
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    
+    .session-info p { margin: 8px 0; font-size: 0.9rem; }
+    .session-info strong { color: #a5b4fc; }
+    
+    .pairing-code {
+      font-size: 2rem;
+      font-family: monospace;
+      text-align: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      letter-spacing: 4px;
+      margin: 16px 0;
+    }
+    
+    .qr-placeholder {
+      width: 150px;
+      height: 150px;
+      background: white;
+      border-radius: 8px;
+      margin: 16px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a1a2e;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SyncMaster Dashboard</h1>
+      <div class="status">
+        <div class="status-item">
+          <span class="dot" id="dbStatus"></span>
+          <span>Database</span>
+        </div>
+        <div class="status-item">
+          <span class="dot" id="redisStatus"></span>
+          <span>Redis</span>
+        </div>
+      </div>
+    </header>
+    
+    <div class="grid">
+      <!-- Create Session -->
+      <div class="card">
+        <h2>Create Session</h2>
+        <button class="btn" onclick="createSession()">Create New Session</button>
+        <div id="createOutput" class="output" style="display:none;"></div>
+        <div id="sessionInfo" class="session-info" style="display:none;"></div>
+      </div>
+      
+      <!-- Join Session -->
+      <div class="card">
+        <h2>Join Session</h2>
+        <label>Pairing Code</label>
+        <input type="text" id="joinCode" placeholder="Enter 8-char code" maxlength="8">
+        <button class="btn" onclick="joinSession()">Join as Slave</button>
+        <div id="joinOutput" class="output" style="display:none;"></div>
+      </div>
+      
+      <!-- Session Details -->
+      <div class="card">
+        <h2>Session Details</h2>
+        <label>Session ID</label>
+        <input type="text" id="sessionId" placeholder="Enter session ID">
+        <button class="btn" onclick="getSession()">Get Details</button>
+        <div id="sessionOutput" class="output" style="display:none;"></div>
+      </div>
+      
+      <!-- Devices -->
+      <div class="card">
+        <h2>Devices</h2>
+        <label>Session ID</label>
+        <input type="text" id="devicesSessionId" placeholder="Enter session ID">
+        <button class="btn" onclick="getDevices()">List Devices</button>
+        <div id="devicesOutput" class="output" style="display:none;"></div>
+      </div>
+      
+      <!-- Send Command -->
+      <div class="card">
+        <h2>Send Command</h2>
+        <label>Session ID</label>
+        <input type="text" id="cmdSessionId" placeholder="Enter session ID">
+        <label>Action</label>
+        <select id="cmdAction">
+          <option value="SCREENSHOT">Screenshot</option>
+          <option value="LOCK">Lock</option>
+          <option value="UNLOCK">Unlock</option>
+          <option value="REBOOT">Reboot</option>
+          <option value="NOTIFY">Notify</option>
+        </select>
+        <label>Target</label>
+        <select id="cmdTarget">
+          <option value="ALL">All Devices</option>
+        </select>
+        <button class="btn" onclick="sendCommand()">Send Command</button>
+        <div id="commandOutput" class="output" style="display:none;"></div>
+      </div>
+      
+      <!-- End Session -->
+      <div class="card">
+        <h2>End Session</h2>
+        <label>Session ID</label>
+        <input type="text" id="endSessionId" placeholder="Enter session ID">
+        <button class="btn btn-danger" onclick="endSession()">End Session</button>
+        <div id="endOutput" class="output" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3000';
+    let currentSession = null;
+
+    async function api(method, path, body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API + path, opts);
+      return res.json();
+    }
+
+    async function checkHealth() {
+      try {
+        const data = await api('GET', '/health');
+        document.getElementById('dbStatus').className = data.services.database === 'healthy' ? 'dot' : 'dot offline';
+        document.getElementById('redisStatus').className = data.services.redis === 'healthy' ? 'dot' : 'dot offline';
+      } catch {
+        document.getElementById('dbStatus').className = 'dot offline';
+        document.getElementById('redisStatus').className = 'dot offline';
+      }
+    }
+
+    async function createSession() {
+      showOutput('createOutput', 'Creating session...', '');
+      try {
+        const data = await api('POST', '/v1/sessions');
+        if (data.error) {
+          showOutput('createOutput', JSON.stringify(data, null, 2), 'error');
+        } else {
+          currentSession = data;
+          showOutput('createOutput', JSON.stringify(data, null, 2), 'success');
+          document.getElementById('sessionId').value = data.session_id;
+          document.getElementById('devicesSessionId').value = data.session_id;
+          document.getElementById('cmdSessionId').value = data.session_id;
+          document.getElementById('endSessionId').value = data.session_id;
+          document.getElementById('joinCode').value = data.pairing_code;
+          showSessionInfo(data);
+        }
+      } catch (e) {
+        showOutput('createOutput', e.message, 'error');
+      }
+    }
+
+    function showSessionInfo(data) {
+      const el = document.getElementById('sessionInfo');
+      el.innerHTML = `
+        <div class="pairing-code">${data.pairing_code}</div>
+        <p><strong>Session ID:</strong> ${data.session_id}</p>
+        <p><strong>Expires:</strong> ${new Date(data.expires_at).toLocaleString()}</p>
+        <p><strong>QR URL:</strong> <a href="${data.qr_url}" style="color:#a5b4fc;">${data.qr_url}</a></p>
+      `;
+      el.style.display = 'block';
+    }
+
+    async function joinSession() {
+      const code = document.getElementById('joinCode').value.trim().toUpperCase();
+      if (!code) return alert('Enter a pairing code');
+      showOutput('joinOutput', 'Joining session...', '');
+      try {
+        const data = await api('POST', `/v1/sessions/${code}/join`, {
+          device_name: 'Web Dashboard Device'
+        });
+        showOutput('joinOutput', JSON.stringify(data, null, 2), data.error ? 'error' : 'success');
+      } catch (e) {
+        showOutput('joinOutput', e.message, 'error');
+      }
+    }
+
+    async function getSession() {
+      const id = document.getElementById('sessionId').value.trim();
+      if (!id) return alert('Enter a session ID');
+      showOutput('sessionOutput', 'Loading...', '');
+      try {
+        const data = await api('GET', `/v1/sessions/${id}`);
+        showOutput('sessionOutput', JSON.stringify(data, null, 2), data.error ? 'error' : 'success');
+      } catch (e) {
+        showOutput('sessionOutput', e.message, 'error');
+      }
+    }
+
+    async function getDevices() {
+      const id = document.getElementById('devicesSessionId').value.trim();
+      if (!id) return alert('Enter a session ID');
+      showOutput('devicesOutput', 'Loading...', '');
+      try {
+        const data = await api('GET', `/v1/sessions/${id}/devices`);
+        showOutput('devicesOutput', JSON.stringify(data, null, 2), '');
+      } catch (e) {
+        showOutput('devicesOutput', e.message, 'error');
+      }
+    }
+
+    async function sendCommand() {
+      const sessionId = document.getElementById('cmdSessionId').value.trim();
+      const action = document.getElementById('cmdAction').value;
+      const target = document.getElementById('cmdTarget').value;
+      if (!sessionId) return alert('Enter a session ID');
+      showOutput('commandOutput', 'Sending command...', '');
+      try {
+        const data = await api('POST', '/v1/commands', {
+          session_id: sessionId,
+          action,
+          target,
+          payload: {}
+        });
+        showOutput('commandOutput', JSON.stringify(data, null, 2), data.error ? 'error' : 'success');
+      } catch (e) {
+        showOutput('commandOutput', e.message, 'error');
+      }
+    }
+
+    async function endSession() {
+      const id = document.getElementById('endSessionId').value.trim();
+      if (!id) return alert('Enter a session ID');
+      if (!confirm('End this session?')) return;
+      showOutput('endOutput', 'Ending session...', '');
+      try {
+        const data = await api('DELETE', `/v1/sessions/${id}`);
+        showOutput('endOutput', JSON.stringify(data, null, 2), data.error ? 'error' : 'success');
+      } catch (e) {
+        showOutput('endOutput', e.message, 'error');
+      }
+    }
+
+    function showOutput(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'output ' + type;
+      el.style.display = 'block';
+    }
+
+    // Init
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>

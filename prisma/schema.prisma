@@ -1,0 +1,100 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  ENDED
+  IDLE
+}
+
+enum DeviceRole {
+  MASTER
+  SLAVE
+}
+
+enum DeviceStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  RECONNECTING
+}
+
+model Session {
+  id            String         @id @default(uuid())
+  pairingCode   String?        @unique
+  masterId      String?
+  status        SessionStatus  @default(PENDING)
+  maxSlaves     Int            @default(50)
+  createdAt     DateTime       @default(now())
+  activatedAt   DateTime?
+  endedAt       DateTime?
+  expiresAt     DateTime?
+  devices       Device[]
+  groups        Group[]
+  commandLogs   CommandLog[]
+
+  @@index([pairingCode])
+}
+
+model Device {
+  id              String        @id @default(uuid())
+  sessionId       String?
+  session         Session?      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role            DeviceRole
+  name            String
+  androidVersion  String?
+  model           String?
+  groupId         String?
+  group           Group?        @relation(fields: [groupId], references: [id])
+  status          DeviceStatus  @default(DISCONNECTED)
+  authToken       String?
+  joinedAt        DateTime      @default(now())
+  lastSeenAt      DateTime      @default(now())
+  commandAcks     CommandAck[]
+
+  @@index([sessionId])
+}
+
+model Group {
+  id        String    @id @default(uuid())
+  sessionId String
+  session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime  @default(now())
+  devices   Device[]
+}
+
+model CommandLog {
+  id        String   @id @default(uuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  action    String
+  payload   Json
+  target    String   @default("ALL")
+  issuedAt  DateTime @default(now())
+  ttlMs     Int      @default(5000)
+  acks      CommandAck[]
+
+  @@index([sessionId, issuedAt])
+}
+
+model CommandAck {
+  commandId   String
+  command     CommandLog    @relation(fields: [commandId], references: [id], onDelete: Cascade)
+  deviceId    String
+  device      Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  status      String
+  reason      String?
+  executedAt  DateTime?
+  latencyMs   Int?
+
+  @@id([commandId, deviceId])
+}

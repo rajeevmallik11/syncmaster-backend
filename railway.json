@@ -1,0 +1,8 @@
+{
+  "build": { "builder": "DOCKERFILE" },
+  "deploy": {
+    "startCommand": "npx prisma db push && node src/index.js",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
