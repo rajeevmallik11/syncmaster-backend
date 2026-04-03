@@ -11,7 +11,7 @@ import { commandRoutes } from './routes/commands.js';
 import { websocketHandler, broadcastToSession, send } from './services/websocket.js';
 import { sessionManager } from './services/sessionManager.js';
 
-const APP_PORT = 3000;
+const APP_PORT = 8080;
 const REDIS_URL = process.env.REDIS_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production';
 const RAILWAY_PORT = parseInt(process.env.PORT) || APP_PORT;
