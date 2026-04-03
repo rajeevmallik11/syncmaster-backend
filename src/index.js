@@ -11,12 +11,12 @@ import { commandRoutes } from './routes/commands.js';
 import { websocketHandler, broadcastToSession, send } from './services/websocket.js';
 import { sessionManager } from './services/sessionManager.js';
 
-const PORT = parseInt(process.env.PORT) || 3000;
+const APP_PORT = 3000;
 const REDIS_URL = process.env.REDIS_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production';
 
 console.log('=== SyncMaster Backend Starting ===');
-console.log(`PORT: ${PORT} (env: ${process.env.PORT})`);
+console.log(`App listening on port: ${APP_PORT}`);
 console.log(`REDIS_URL: ${REDIS_URL ? 'SET' : 'NOT SET'}`);
 
 const prisma = new PrismaClient({
@@ -114,8 +114,8 @@ await fastify.register(deviceRoutes, { prefix: '/v1/devices' });
 await fastify.register(groupRoutes, { prefix: '/v1/groups' });
 await fastify.register(commandRoutes, { prefix: '/v1/commands' });
 
-await fastify.listen({ port: PORT, host: '0.0.0.0' });
-console.log(`Server running on port ${PORT}`);
+await fastify.listen({ port: APP_PORT, host: '0.0.0.0' });
+console.log(`Server running on port ${APP_PORT}`);
 
 if (REDIS_URL && redis.connect) {
   (async () => {
