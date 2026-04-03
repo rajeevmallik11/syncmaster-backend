@@ -16,8 +16,7 @@ const REDIS_URL = process.env.REDIS_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production';
 
 console.log('=== SyncMaster Backend Starting ===');
-console.log(`PORT from env: ${process.env.PORT}`);
-console.log(`Using PORT: ${PORT}`);
+console.log(`PORT: ${PORT} (env: ${process.env.PORT})`);
 console.log(`REDIS_URL: ${REDIS_URL ? 'SET' : 'NOT SET'}`);
 
 const prisma = new PrismaClient({
@@ -116,9 +115,7 @@ await fastify.register(groupRoutes, { prefix: '/v1/groups' });
 await fastify.register(commandRoutes, { prefix: '/v1/commands' });
 
 await fastify.listen({ port: PORT, host: '0.0.0.0' });
-console.log(`Server running on http://0.0.0.0:${PORT}`);
-console.log(`Health check: http://0.0.0.0:${PORT}/health`);
-console.log(`Root: http://0.0.0.0:${PORT}/`);
+console.log(`Server running on port ${PORT}`);
 
 if (REDIS_URL && redis.connect) {
   (async () => {
