@@ -14,9 +14,11 @@ import { sessionManager } from './services/sessionManager.js';
 const APP_PORT = 3000;
 const REDIS_URL = process.env.REDIS_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production';
+const RAILWAY_PORT = parseInt(process.env.PORT) || APP_PORT;
 
 console.log('=== SyncMaster Backend Starting ===');
-console.log(`App listening on port: ${APP_PORT}`);
+console.log(`App port: ${APP_PORT}`);
+console.log(`Railway port: ${RAILWAY_PORT}`);
 console.log(`REDIS_URL: ${REDIS_URL ? 'SET' : 'NOT SET'}`);
 
 const prisma = new PrismaClient({
@@ -114,8 +116,8 @@ await fastify.register(deviceRoutes, { prefix: '/v1/devices' });
 await fastify.register(groupRoutes, { prefix: '/v1/groups' });
 await fastify.register(commandRoutes, { prefix: '/v1/commands' });
 
-await fastify.listen({ port: APP_PORT, host: '0.0.0.0' });
-console.log(`Server running on port ${APP_PORT}`);
+await fastify.listen({ port: RAILWAY_PORT, host: '0.0.0.0' });
+console.log(`Server running on port ${RAILWAY_PORT}`);
 
 if (REDIS_URL && redis.connect) {
   (async () => {
