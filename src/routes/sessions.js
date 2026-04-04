@@ -31,7 +31,7 @@ export async function sessionRoutes(fastify, options) {
       return reply.code(201).send({
         session_id: session.id,
         pairing_code: pairingCode,
-        qr_url: `https://syncmaster-backend-production.up.railway.app/qr/${pairingCode}`,
+        qr_url: `https://syncmaster-backend-production-05aa.up.railway.app/qr/${pairingCode}`,
         expires_at: expiresAt.toISOString()
       });
     } catch (error) {
