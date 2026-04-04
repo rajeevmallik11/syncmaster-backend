@@ -11,7 +11,7 @@ import { commandRoutes } from './routes/commands.js';
 import { websocketHandler, broadcastToSession, send } from './services/websocket.js';
 import { sessionManager } from './services/sessionManager.js';
 
-const APP_PORT = 8080;
+const APP_PORT = 3000;
 const REDIS_URL = process.env.REDIS_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production';
 const RAILWAY_PORT = parseInt(process.env.PORT) || APP_PORT;
@@ -29,7 +29,7 @@ const createMockRedis = () => {
   const store = new Map();
   const hashStore = new Map();
   const listStore = new Map();
-  
+
   return {
     get: async (key) => store.get(key) || null,
     set: async (key, value) => { store.set(key, value); return 'OK'; },
@@ -40,9 +40,9 @@ const createMockRedis = () => {
     expire: async () => 1,
     ttl: async () => -1,
     ping: async () => 'PONG',
-    quit: async () => {},
-    disconnect: async () => {},
-    connect: async () => {},
+    quit: async () => { },
+    disconnect: async () => { },
+    connect: async () => { },
     hset: async (key, field, value) => { if (!hashStore.has(key)) hashStore.set(key, new Map()); hashStore.get(key).set(field, value); return 1; },
     hget: async (key, field) => hashStore.get(key)?.get(field) || null,
     hdel: async (key, ...fields) => { const hs = hashStore.get(key); if (!hs) return 0; let count = 0; fields.forEach(f => { if (hs.delete(f)) count++; }); return count; },
@@ -54,8 +54,8 @@ const createMockRedis = () => {
       return [...store.keys(), ...hashStore.keys(), ...listStore.keys()].filter(k => regex.test(k));
     },
     status: 'ready',
-    on: () => ({ on: () => {} }),
-    once: () => ({ on: () => {} })
+    on: () => ({ on: () => { } }),
+    once: () => ({ on: () => { } })
   };
 };
 
@@ -70,7 +70,7 @@ if (REDIS_URL) {
       retryStrategy: () => null,
       enableOfflineQueue: false
     });
-    
+
     redis.on('error', (err) => console.error('Redis error:', err.message));
   } catch (e) {
     console.error('Redis init failed, using mock:', e.message);
