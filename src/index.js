@@ -116,7 +116,7 @@ await fastify.register(deviceRoutes, { prefix: '/v1/devices' });
 await fastify.register(groupRoutes, { prefix: '/v1/groups' });
 await fastify.register(commandRoutes, { prefix: '/v1/commands' });
 
-await fastify.listen({ port: RAILWAY_PORT, host: '0.0.0.0' });
+await fastify.listen({ port: parseInt(process.env.PORT) || 3000, host: '::' });
 console.log(`Server running on port ${RAILWAY_PORT}`);
 
 if (REDIS_URL && redis.connect) {
